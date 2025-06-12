@@ -115,3 +115,14 @@ BankManagementSystem/
 • MySQL Connector for Python (pip install mysql-connector-python)
 
 • Pillow (pip install pillow)
+
+# 🖼️ Screenshots
+Main Page: ![image](https://github.com/user-attachments/assets/f70e1966-8dcd-44b6-b43e-d7ae7f3ba5ee)
+User Screen: ![image](https://github.com/user-attachments/assets/1c8e265e-1a04-44ed-afa3-905cba31f21e)
+Admin Screen: ![image](https://github.com/user-attachments/assets/d1c30d15-0b74-4e9b-92a4-1862d474aa77)
+Create account screen: ![image](https://github.com/user-attachments/assets/b22cba68-0011-45bd-83b9-471c3bfa68d2)
+
+
+
+
+
