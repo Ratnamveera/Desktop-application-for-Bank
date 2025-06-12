@@ -1,0 +1,422 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox, filedialog
+from PIL import Image, ImageTk
+import mysql.connector
+import random
+import csv
+import shutil
+from datetime import datetime
+import os
+
+# Ensure directories for export and backup
+os.makedirs("exports", exist_ok=True)
+os.makedirs("backups", exist_ok=True)
+
+class BankApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Bank Management System")
+        self.root.geometry("1200x700")
+        self.root.configure(bg="#c4e3e6")
+        self.current_user = None
+
+        try:
+            self.conn = mysql.connector.connect(
+                host="localhost", user="root", password="Kumar.3864",
+                database="bank_management_system"
+            )
+        except mysql.connector.Error as err:
+            messagebox.showerror("DB Error", f"Can't connect to DB: {err}")
+            self.root.destroy()
+            return
+
+        try:
+            self.bank_image = ImageTk.PhotoImage(Image.open("C:/Users/Hai/Image/Bank2.png").resize((720, 700)))
+            self.bank1_image = ImageTk.PhotoImage(Image.open("C:/Users/Hai/Image/Bank3.png").resize((1380, 720)))
+        except:
+            self.bank_image = self.bank1_image = None
+
+        self.show_login_screen()
+
+    def clear_screen(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+    def build_login_layout(self):
+        container = tk.Frame(self.root, bg="#30D5C8")
+        container.pack(fill=tk.BOTH, expand=True)
+        if self.bank_image:
+            tk.Label(container, image=self.bank_image, bg="#30D5C8").pack(side=tk.LEFT, fill=tk.Y)
+        right = tk.Frame(container, bg="#30D5C8")
+        right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        return right
+
+    def build_main_layout(self):
+        if self.bank1_image:
+            bg_label = tk.Label(self.root, image=self.bank1_image)
+            bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        center_frame = tk.Frame(self.root, bg="#30D5C8", bd=2)
+        center_frame.place(relx=0.5, rely=0.5, anchor="center")
+        return center_frame
+
+    def show_login_screen(self):
+        self.clear_screen()
+        header = tk.Label(root, text="Welcome to SMB Bank", font=("Helvetica", 40, "bold"), bg="#c4e3e6") # Header label
+        header.pack(pady=10)
+        title = tk.Label(root, text="Smart Move for Banking", font=("Georgia", 30, "bold"), bg="#c4e3e6", fg="#334") # Title label
+        title.place(x=420, y=80)
+        image_path = "C:/Users/Hai/image/Bank2.png" # Load the image using PIL
+        image = Image.open(image_path)
+        image = image.resize((550, 500), Image.Resampling.LANCZOS)  # Updated here
+        bank1_image = ImageTk.PhotoImage(image)
+        bank_image = tk.Canvas(root, width=550, height=500, bg="#c4e3e6", highlightthickness=0)
+        bank_image.place(x=0, y=200)
+        bank_image.create_image(0, 0, image=bank1_image, anchor="nw")
+        
+        user_frame = tk.Frame(root, bg="#dbeff0", bd=2, relief="ridge")  # User Login Frame
+        user_frame.place(x=600, y=250, width=250, height=250)
+        tk.Label(user_frame, text="User Login", font=("Helvetica", 20, "bold"), bg="#dbeff0").pack(pady=10)
+        tk.Label(user_frame, text="Account No", bg="#dbeff0", anchor='w').pack(fill='x', padx=10)
+        self.user_account_entry = tk.Entry(user_frame)
+        self.user_account_entry.pack(fill='x', padx=10, pady=5)
+        tk.Label(user_frame, text="Password", bg="#dbeff0", anchor='w').pack(fill='x', padx=10)
+        self.user_pass_entry = tk.Entry(user_frame, show="*")
+        self.user_pass_entry.pack(fill='x', padx=10, pady=5)
+        tk.Button(user_frame, text="Login", command=self.login_user).pack(pady=10)
+        
+        admin_frame = tk.Frame(root, bg="#dbeff0", bd=2, relief="ridge")  # Admin Login Frame
+        admin_frame.place(x=870, y=250, width=250, height=250)
+        tk.Label(admin_frame, text="Admin Login", font=("Helvetica", 20, "bold"), bg="#dbeff0").pack(pady=10)
+        tk.Label(admin_frame, text="Admin ID", bg="#dbeff0", anchor='w').pack(fill='x', padx=10)
+        self.admin_id_entry = tk.Entry(admin_frame)  # Store in self
+        self.admin_id_entry.pack(fill='x', padx=10, pady=5)
+        tk.Label(admin_frame, text="Password", bg="#dbeff0", anchor='w').pack(fill='x', padx=10)
+        self.admin_pass_entry = tk.Entry(admin_frame, show="*")  # Store in self
+        self.admin_pass_entry.pack(fill='x', padx=10, pady=5)
+        tk.Button(admin_frame, text="Login", command=self.login_admin).pack(pady=10)
+
+        
+        root.bank1_image = bank1_image
+        
+    def login_user(self):
+        acc = self.user_account_entry.get()
+        pw = self.user_pass_entry.get()
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM Users WHERE account_no=%s AND password=%s", (acc, pw))
+        user = cur.fetchone()
+        if user:
+            self.current_user = user
+            self.show_dashboard()
+        else:
+            messagebox.showerror("Error", "Invalid account number or password.")
+    def login_admin(self):
+        aid = self.admin_id_entry.get()
+        apass = self.admin_pass_entry.get()
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM Admin WHERE username=%s AND password=%s", (aid, apass))
+        if cur.fetchone():
+            self.show_admin_dashboard()
+        else:
+            messagebox.showerror("Error", "Invalid admin credentials.")
+    build_layout = build_main_layout
+
+    def show_dashboard(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text=f"Welcome, {self.current_user[1]}", font=('Georgia', 30), bg="#30D5C8").pack(pady=20)
+        for (txt, cmd) in [
+            ("Check Balance", self.check_balance),
+            ("Deposit", self.deposit_screen),
+            ("Withdraw", self.withdraw_screen),
+            ("Transfer", self.transfer_screen),
+            ("Transaction History", self.transaction_history),
+            ("Logout", self.show_login_screen),
+        ]:
+            tk.Button(right, text=txt, width=20, command=cmd).pack(pady=5)
+
+    def check_balance(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT balance FROM Users WHERE account_no=%s", (self.current_user[0],))
+        bal = cur.fetchone()[0]
+        messagebox.showinfo("Balance", f"Your balance is ₹{bal:.2f}")
+
+    def deposit_screen(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="Deposit Amount", font=('Georgia', 16), bg="#30D5C8").pack(pady=20)
+        amt = tk.Entry(right); amt.pack(pady=5)
+        tk.Button(right, text="Deposit", width=15, command=lambda: self.deposit(amt.get())).pack(pady=5)
+        tk.Button(right, text="Back", width=15, command=self.show_dashboard).pack(pady=5)
+
+    def deposit(self, amount):
+        try:
+            amt = float(amount); assert amt > 0
+        except:
+            messagebox.showerror("Error", "Enter a valid positive amount.")
+            return
+        cur = self.conn.cursor()
+        cur.execute("UPDATE Users SET balance = balance + %s WHERE account_no=%s", (amt, self.current_user[0]))
+        cur.execute("INSERT INTO Transactions (account_no, txn_type, amount) VALUES (%s, 'Deposit', %s)", (self.current_user[0], amt))
+        self.conn.commit()
+        messagebox.showinfo("Success", "Amount deposited.")
+        self.show_dashboard()
+
+    def withdraw_screen(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="Withdraw Amount", font=('Georgia', 20), bg="#30D5C8").pack(pady=20)
+        amt = tk.Entry(right); amt.pack(pady=5)
+        tk.Button(right, text="Withdraw", width=15, command=lambda: self.withdraw(amt.get())).pack(pady=5)
+        tk.Button(right, text="Back", width=15, command=self.show_dashboard).pack(pady=5)
+
+    def withdraw(self, amount):
+        try:
+            amt = float(amount); assert amt > 0
+        except:
+            messagebox.showerror("Error", "Enter a valid positive amount.")
+            return
+        cur = self.conn.cursor()
+        cur.execute("SELECT balance FROM Users WHERE account_no=%s", (self.current_user[0],))
+        bal = cur.fetchone()[0]
+        if amt > bal:
+            messagebox.showerror("Error", "Insufficient balance.")
+        else:
+            cur.execute("UPDATE Users SET balance = balance - %s WHERE account_no=%s", (amt, self.current_user[0]))
+            cur.execute("INSERT INTO Transactions (account_no, txn_type, amount) VALUES (%s, 'Withdraw', %s)", (self.current_user[0], amt))
+            self.conn.commit()
+            messagebox.showinfo("Success", "Amount withdrawn.")
+        self.show_dashboard()
+
+    def transfer_screen(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="Transfer Funds", font=('Georgia', 20), bg="#30D5C8").pack(pady=20)
+        tk.Label(right, text="Recipient A/C No:", bg="#30D5C8").pack()
+        recv = tk.Entry(right); recv.pack(pady=5)
+        tk.Label(right, text="Amount:", bg="#30D5C8").pack()
+        amt = tk.Entry(right); amt.pack(pady=5)
+        tk.Button(right, text="Transfer", width=15, command=lambda: self.transfer(recv.get(), amt.get())).pack(pady=5)
+        tk.Button(right, text="Back", width=15, command=self.show_dashboard).pack(pady=5)
+    
+    def transfer(self, to_acc, amount):
+        try:
+            amt = float(amount)
+            assert amt > 0
+        except:
+            messagebox.showerror("Error", "Enter valid amount.")
+            return
+        cur = self.conn.cursor()
+        cur.execute("SELECT balance FROM Users WHERE account_no=%s", (self.current_user[0],))
+        bal = cur.fetchone()
+        if not bal:
+            messagebox.showerror("Error", "Sender account not found.")
+            return
+        bal = bal[0]
+        cur.execute("SELECT * FROM Users WHERE account_no=%s", (to_acc,))
+        if not cur.fetchone():
+            messagebox.showerror("Error", "Recipient does not exist.")
+            return
+        if amt > bal:
+            messagebox.showerror("Error", "Insufficient balance.")
+            return
+        cur.execute("UPDATE Users SET balance = balance - %s WHERE account_no=%s", (amt, self.current_user[0]))
+        cur.execute("UPDATE Users SET balance = balance + %s WHERE account_no=%s", (amt, to_acc))
+        cur.execute("""INSERT INTO Transactions (account_no, txn_type, amount, to_account)VALUES (%s, 'TransferOut', %s, %s)""", (self.current_user[0], amt, to_acc))
+        cur.execute("""INSERT INTO Transactions (account_no, txn_type, amount)VALUES (%s, 'TransferIn', %s)""", (to_acc, amt))
+        self.conn.commit()
+        messagebox.showinfo("Success", f"₹{amt:.2f} transferred to {to_acc}.")
+        self.show_dashboard()
+   
+    def transaction_history(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="Transaction History", font=('Georgia', 20), bg="#30D5C8").pack(pady=10)
+        cur = self.conn.cursor()
+        cur.execute("""SELECT txn_id, account_no, txn_type, to_account, amount, DATE(txn_time), TIME(txn_time) FROM Transactions 
+        WHERE account_no = %s OR to_account = %s ORDER BY txn_time DESC
+        """, (self.current_user[0], self.current_user[0]))
+        txns = cur.fetchall()
+        if not txns:
+            tk.Label(right, text="No transactions found.", font=('Georgia', 20), bg="#30D5C8").pack(pady=5)
+        else:
+            columns = ('Txn ID', 'From A/C', 'Txn Type', 'To A/C', 'Amount', 'Txn Date', 'Txn Time')
+            tree = ttk.Treeview(right, columns=columns, show='headings')
+            tree.pack(pady=10, fill='both', expand=True)
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, anchor='center')
+            for row in txns:
+                tree.insert('', tk.END, values=row)
+            scrollbar = ttk.Scrollbar(right, orient='vertical', command=tree.yview)
+            tree.configure(yscroll=scrollbar.set)
+            scrollbar.pack(side='right', fill='y')
+        tk.Button(right, text="Back", width=15, command=self.show_dashboard).pack(pady=10)
+
+    def create_account_screen(self):
+        self.clear_screen()
+        tk.Label(self.root, text="Create New Account", font=("Helvetica", 24, "bold"), bg="#c4e3e6").pack(pady=20)
+        right = tk.Frame(self.root, bg="#30D5C8", bd=2, relief="ridge")
+        right.place(relx=0.5, rely=0.5, anchor="center")
+        tk.Label(right, text="New Account Registration", font=('Georgia', 18), bg="#30D5C8").pack(pady=10)
+        fields = ['Full Name', 'Address', 'KYC ID', 'Mobile', 'Email', 'Account Type', 'Password']
+        self.new_entries = {}
+        for f in fields:
+            tk.Label(right, text=f, bg="#30D5C8", anchor="w").pack(fill='x', padx=20)
+            entry = tk.Entry(right, show='*' if f == 'Password' else None)
+            entry.pack(fill='x', padx=20, pady=4)
+            self.new_entries[f] = entry
+        tk.Button(right, text="Submit", width=15, command=self.create_account).pack(pady=10)
+        tk.Button(right, text="Back", width=15, command=self.show_login_screen).pack()
+
+    def create_account(self):
+        data = [self.new_entries[f].get().strip() for f in self.new_entries]
+        if "" in data:
+            messagebox.showerror("Error", "All fields are required.")
+            return
+        acc = str(random.randint(100000, 999999))
+        payload = (acc, *data)
+        cur = self.conn.cursor()
+        cur.execute("""INSERT INTO Users (account_no, name, address, kyc, mobile, email, account_type, password)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""", payload)
+        self.conn.commit()
+        messagebox.showinfo("Success", f"Account Created.\nYour Account No: {acc}")
+        self.show_login_screen()
+
+    def show_admin_dashboard(self):
+        self.clear_screen(); right = self.build_layout()
+        tk.Label(right, text="Admin Dashboard", font=('Georgia', 30), bg="#30D5C8").pack(pady=20)
+        for (txt, cmd) in [
+            ("Total Accounts", self.view_total_accounts),
+            ("Generate Reports", self.generate_reports),
+            ("View All Transactions", self.monitor_transactions),
+            ("Account Summary", self.view_account_summary),
+            ("Export Reports (CSV)", self.export_reports_csv),
+            ("Backup DB", self.backup_database),
+            ("Restore DB", self.restore_database),
+            ("Logout", self.show_login_screen),
+        ]:
+            tk.Button(right, text=txt, width=25, command=cmd).pack(pady=5)
+
+    def view_total_accounts(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM Users")
+        cnt = cur.fetchone()[0]
+        messagebox.showinfo("Accounts", f"Total user accounts: {cnt}")
+
+    def generate_reports(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="Generate Reports", font=('Georgia', 20), bg="#30D5C8").pack(pady=10)
+        for period in ['Daily', 'Monthly', 'Yearly']:
+            tk.Button(right, text=period, width=15, command=lambda p=period.lower(): self.show_report(p)).pack(pady=5)
+        tk.Button(right, text="Back", width=15, command=self.show_admin_dashboard).pack(pady=5)    
+    
+    def show_report(self, period):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text=f"{period.capitalize()} Transaction Report", font=('Georgia', 20), bg="#30D5C8").pack(pady=10)
+        cur = self.conn.cursor()
+        if period == 'daily':
+            cur.execute("SELECT txn_id, account_no, txn_type, amount, DATE(txn_time), TIME(txn_time) FROM Transactions WHERE DATE(txn_time)=CURDATE()")
+        elif period == 'monthly':
+            cur.execute("SELECT txn_id, account_no, txn_type, amount, DATE(txn_time), TIME(txn_time) FROM Transactions WHERE MONTH(txn_time)=MONTH(CURDATE()) AND YEAR(txn_time)=YEAR(CURDATE())")
+        else:  # yearly
+            cur.execute("SELECT txn_id, account_no, txn_type, amount, DATE(txn_time), TIME(txn_time) FROM Transactions WHERE YEAR(txn_time)=YEAR(CURDATE())")
+        txns = cur.fetchall()
+        if not txns:
+            tk.Label(right, text="No transactions found.", font=('Georgia', 20), bg="#30D5C8").pack(pady=5)
+        else:
+            columns = ('Txn ID', 'Account No', 'Txn Type', 'Amount', 'Txn Date', 'Txn Time')
+            tree = ttk.Treeview(right, columns=columns, show='headings')
+            tree.pack(pady=10, fill='both', expand=True)
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, anchor='center')
+            for row in txns:
+                tree.insert('', tk.END, values=row)
+            scrollbar = ttk.Scrollbar(right, orient='vertical', command=tree.yview)
+            tree.configure(yscroll=scrollbar.set)
+            scrollbar.pack(side='right', fill='y')
+        tk.Button(right, text="Back", width=15, command=self.generate_reports).pack(pady=10)
+    
+    def monitor_transactions(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="All Transactions", font=('Georgia', 20), bg="#30D5C8").pack(pady=10)
+        cur = self.conn.cursor()
+        cur.execute("SELECT txn_id, account_no, txn_type, amount, DATE(txn_time), TIME(txn_time) FROM Transactions ORDER BY txn_time DESC")
+        txns = cur.fetchall()
+        if not txns:
+            tk.Label(right, text="No transactions found.", font=('Georgia', 20), bg="#30D5C8").pack(pady=5)
+        else:
+            columns = ('Txn ID', 'Account No', 'Txn Type', 'Amount', 'Txn Date', 'Txn Time')
+            tree = ttk.Treeview(right, columns=columns, show='headings')
+            tree.pack(pady=10, fill='both', expand=True)
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, anchor='center')
+            for row in txns:
+                tree.insert('', tk.END, values=row)
+            scrollbar = ttk.Scrollbar(right, orient='vertical', command=tree.yview)
+            tree.configure(yscroll=scrollbar.set)
+            scrollbar.pack(side='right', fill='y')   
+        tk.Button(right, text="Back", width=15, command=self.show_admin_dashboard).pack(pady=10)
+    
+    def view_account_summary(self):
+        self.clear_screen()
+        right = self.build_main_layout()
+        tk.Label(right, text="Account Summary", font=('Georgia', 20), bg="#30D5C8").pack(pady=10)
+        cur = self.conn.cursor()
+        cur.execute("SELECT account_no, name, account_type, balance, mobile, email FROM Users")
+        accounts = cur.fetchall()
+        if not accounts:
+            tk.Label(right, text="No accounts found.", font=('Georgia', 16), bg="#30D5C8").pack(pady=5)
+        else:
+            columns = ('Account No', 'Name', 'Account Type', 'Balance', 'Mobile', 'Email')
+            tree = ttk.Treeview(right, columns=columns, show='headings')
+            tree.pack(pady=10, fill='both', expand=True)
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, anchor='center')
+            for row in accounts:
+                acc_no, name, acc_type, balance, mobile, email = row
+                tree.insert('', tk.END, values=(acc_no, name, acc_type, f"₹{balance:.2f}", mobile, email))
+            scrollbar = ttk.Scrollbar(right, orient='vertical', command=tree.yview)
+            tree.configure(yscroll=scrollbar.set)
+            scrollbar.pack(side='right', fill='y')
+        tk.Button(right, text="Back", width=15, command=self.show_admin_dashboard).pack(pady=10)
+
+    def export_reports_csv(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM Transactions")
+        data = cur.fetchall()
+        file = f"exports/transactions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        with open(file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['ID','Account No','Txn Type','Amount','Txn Time'])
+            writer.writerows(data)
+        messagebox.showinfo("Exported", f"Transactions exported to {file}")
+        
+    def backup_database(self):
+        try:
+            shutil.copy("bank_management_system.sql", f"backups/backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql")
+            messagebox.showinfo("Backup", "Database backup successful.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Backup failed: {e}")
+
+    def restore_database(self):
+        path = filedialog.askopenfilename(title="Select Backup File",
+                                          filetypes=(('SQL files','*.sql'),('All files','*.*')))
+        if not path:
+            return
+        try:
+            os.system(f"mysql -u root -pKumar.3864 bank_management_system < {path}")
+            messagebox.showinfo("Restore", "Database restored successfully.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Restore failed: {e}")
+            
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = BankApp(root)
+    root.mainloop()
