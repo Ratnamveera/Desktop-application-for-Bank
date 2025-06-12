@@ -1,10 +1,15 @@
 # 💰 Bank Management System (Tkinter + MySQL)
-"Smart Move for Banking." 🏦
+# "Smart Move for Banking." 🏦
 A modern Bank Management System built with Python (Tkinter GUI) and MySQL, offering complete banking operations for users and powerful reporting tools for admins.
+
 A GUI-based Bank Management System built with Tkinter and MySQL to manage:
+
 • User accounts
+
 • Transactions (deposit, withdraw, transfer)
+
 • Admin-level reporting
+
 • Data export and backup
 
 #🚀 Features
