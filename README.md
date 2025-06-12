@@ -12,33 +12,52 @@ A GUI-based Bank Management System built with Tkinter and MySQL to manage:
 
 • Data export and backup
 
-#🚀 Features
-👤 User Features
+# 🚀 Features
+# 👤 User Features
+
 •	✅ Secure Login
+
 •	💳 Account Creation
+
 •	💰 Deposit / Withdraw Funds
+
 •	🔁 Transfer Money Between Accounts
+
 •	📄 View Transaction History
+
 •	📊 Real-Time Balance Display
 
-👮 Admin Features
+# 👮 Admin Features
+
 •	🔐 Secure Admin Login
+
 •	📋 View Total User Accounts
+
 •	🧾 Generate Daily / Monthly / Yearly Reports
+
 •	📊 Monitor All Transactions
+
 •	📈 View All Account Summaries
+
 •	📤 Export Transactions as CSV
+
 •	💾 Backup & Restore MySQL Database
 
-🛠️ Technology Stack
+# 🛠️ Technology Stack
+
 • Frontend: Python Tkinter
+
 • Backend: MySQL Database
+
 • Image Handling: PIL (Pillow)
+
 • Data Export: CSV
+
 • Backup: SQL Dump
 
-🧱 Database Schema
+# 🧱 Database Schema
 User: 
+
 CREATE TABLE Users (
     account_no VARCHAR(10) PRIMARY KEY,
     name VARCHAR(100),
@@ -50,12 +69,16 @@ CREATE TABLE Users (
     password VARCHAR(50),
     balance DECIMAL(10, 2) DEFAULT 0
 );
+
 Admin: 
+
 CREATE TABLE Admin (
     username VARCHAR(50),
     password VARCHAR(50)
 );
+
 Transactions: 
+
 CREATE TABLE Transactions (
     txn_id INT AUTO_INCREMENT PRIMARY KEY,
     account_no VARCHAR(10),
@@ -65,20 +88,30 @@ CREATE TABLE Transactions (
     txn_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-📦 Project Structure
+# 📦 Project Structure
 BankManagementSystem/
+
 ├── bms.py                 # Main Application File
+
 ├── bank_management_system.sql  # Database Backup File
+
 ├── exports/               # Exported CSV Reports
+
 ├── backups/               # Backup SQL Files
+
 ├── screens/               # Screenshots
+
 ├── images/                # Bank Images
+
 └── README.md
 
-🔧 Setup Instructions
+# 🔧 Setup Instructions
+# 🔽 Prerequisites
 
-🔽 Prerequisites
 • Python 3.x
+
 • MySQL Server
+
 • MySQL Connector for Python (pip install mysql-connector-python)
+
 • Pillow (pip install pillow)
